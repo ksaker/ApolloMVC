@@ -1,16 +1,23 @@
 package ru.my.executors;
 
+import com.sun.deploy.security.ruleset.ExceptionRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -137,4 +144,123 @@ public class SimpleFutureTaskTest {
 
         scheduledExecutorService.shutdown();
     }
+
+    /**
+     * Проверим как работаю policy в ThreadPoolExecutor'e
+     */
+
+    /**
+     * Поведение по умолчанию возвращать Exception при попытке добавить задачу в обработку
+     */
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
+
+    @Test
+    public void should_throwException_when_tryToAddTaskWhenPoolShutDown()
+            throws ExecutionException, InterruptedException {
+
+        ExecutorService executorService = new ThreadPoolExecutor(1, 1,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(), new ThreadPoolExecutor.AbortPolicy());
+
+        executorService.submit(() -> {
+            System.out.println("task started");
+            try {
+                sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        executorService.shutdown();
+
+        exception.expect(RejectedExecutionException.class);
+        executorService.submit(() -> System.out.println("new task"));
+
+        while (!executorService.isShutdown()) {
+            System.out.println("wait shut down");
+            sleep(1000);
+        }
+
+    }
+
+    /**
+     * Почему взято 3 задачи и размер очереди 1, потому как одна задача сразу берется на исполнение и переполнение
+     * очереди можно вызвать только если есть еще 2 задачи.
+     * Таким образом одна из задач будет запущена в main потоке.
+     */
+    @Test
+    public void should_startTaskInCurrentThread_when_tryToAddTaskWhenPoolQuieIsFull()
+            throws ExecutionException, InterruptedException {
+
+        ExecutorService executorService = new ThreadPoolExecutor(1, 1,
+                500L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(1), new ThreadPoolExecutor.CallerRunsPolicy());
+
+        executorService.submit(pooledTask);
+
+        Runnable lastTask = () -> System.out.println("Quid task started in thread " + Thread.currentThread().getName());
+        executorService.submit(lastTask);
+        Runnable lastTask1 = () -> System.out.println("Main task started in thread " + Thread.currentThread().getName());
+        executorService.submit(lastTask1);
+
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
+    }
+
+    private final Runnable pooledTask = () -> {
+        String name = Thread.currentThread().getName();
+
+        System.out.println("Pooled task started in thread " + name);
+        try {
+            sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Thread with task stopped");
+    };
+
+    /**
+     * Отменяет старую задачу в очереди и меняет ее на новую
+     */
+    @Test
+    public void should_discardOldTask_when_tryToAddTaskWhenPoolQueIsFull()
+            throws ExecutionException, InterruptedException {
+
+        ExecutorService executorService = new ThreadPoolExecutor(1, 1,
+                500L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(1), new ThreadPoolExecutor.DiscardOldestPolicy());
+
+        executorService.submit(pooledTask);
+
+        Runnable lastTask = () -> System.out.println(
+                "Quid task discarded started in thread " + Thread.currentThread().getName());
+        executorService.submit(lastTask);
+        Runnable lastTask1 = () -> System.out.println("new Quid task started in thread " + Thread.currentThread().getName());
+        executorService.submit(lastTask1);
+
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Если очередь полна, то не берет в обработку
+     */
+    @Test
+    public void should_discardNewTask_when_tryToAddTaskWhenPoolQueIsFull()
+            throws ExecutionException, InterruptedException {
+
+        ExecutorService executorService = new ThreadPoolExecutor(1, 1,
+                500L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(1), new ThreadPoolExecutor.DiscardPolicy());
+
+        executorService.submit(pooledTask);
+
+        Runnable lastTask = () -> System.out.println(
+                "Quid task started in thread " + Thread.currentThread().getName());
+        executorService.submit(lastTask);
+        Runnable lastTask1 = () -> System.out.println("New task will discard started in thread " + Thread.currentThread().getName());
+        executorService.submit(lastTask1);
+
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
+    }
+
 }
