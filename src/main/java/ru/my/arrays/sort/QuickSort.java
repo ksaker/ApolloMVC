@@ -54,45 +54,37 @@ public class QuickSort {
     }
 
     public static void recursive(int startLeftIndex, int endRightIndex, int[]array) {
-        //Выйти, если в отрезке один элемент
-        if (endRightIndex - startLeftIndex < 1) {
-            return;
-        }
 
         int leftIndex = startLeftIndex;
         int rightIndex = endRightIndex;
 
         int bearingIndex = leftIndex + (rightIndex - leftIndex)/2;
+        int pivot = array[bearingIndex];
 
-        while (leftIndex != rightIndex) {
+        while (leftIndex <= rightIndex) {
 
-            if (array[leftIndex] <= array[bearingIndex] && leftIndex != bearingIndex) {
+            if (array[leftIndex] < pivot) {
                 leftIndex++;
-            } else if (array[rightIndex] > array[bearingIndex] && rightIndex != bearingIndex) {
+            } else if (array[rightIndex] > pivot) {
                 rightIndex--;
             } else {
                 int tmp = array[leftIndex];
                 array[leftIndex] = array[rightIndex];
                 array[rightIndex] = tmp;
-
-                if (leftIndex == bearingIndex) {
-                    bearingIndex = rightIndex;
-                    //no decrement right value
-                    leftIndex ++;
-                } else if (rightIndex == bearingIndex) {
-                    bearingIndex = leftIndex;
-                    //no increment left value
-                    rightIndex --;
-                } else {
-                    rightIndex--;
-                    leftIndex++;
-                }
+                rightIndex--;
+                leftIndex++;
             }
 
         }
 
-        recursive(startLeftIndex, bearingIndex-1, array);
-        recursive(bearingIndex+1, endRightIndex, array);
+        if (startLeftIndex < rightIndex) {
+            recursive(startLeftIndex, rightIndex, array);
+        }
+
+        if (leftIndex < endRightIndex) {
+            recursive(leftIndex, endRightIndex, array);
+        }
+
     }
 
 }
