@@ -63,36 +63,22 @@ public class QuickSort {
         int rightIndex = endRightIndex;
 
         int bearingIndex = leftIndex + (rightIndex - leftIndex)/2;
-        boolean leftSwap = false;
-        boolean rightSwap = false;
 
         while (leftIndex != rightIndex) {
 
             if (array[leftIndex] <= array[bearingIndex] && leftIndex != bearingIndex) {
                 leftIndex++;
-            } else {
-                leftSwap = true;
-            }
-
-            if (array[rightIndex] > array[bearingIndex] && rightIndex != bearingIndex) {
+            } else if (array[rightIndex] > array[bearingIndex] && rightIndex != bearingIndex) {
                 rightIndex--;
             } else {
-                rightSwap = true;
-            }
-
-            if (leftSwap && rightSwap) {
                 int tmp = array[leftIndex];
                 array[leftIndex] = array[rightIndex];
                 array[rightIndex] = tmp;
-
-                leftSwap = false;
-                rightSwap = false;
 
                 if (leftIndex == bearingIndex) {
                     bearingIndex = rightIndex;
                     //no decrement right value
                     leftIndex ++;
-
                 } else if (rightIndex == bearingIndex) {
                     bearingIndex = leftIndex;
                     //no increment left value
@@ -107,7 +93,6 @@ public class QuickSort {
 
         recursive(startLeftIndex, bearingIndex-1, array);
         recursive(bearingIndex+1, endRightIndex, array);
-
     }
 
 }
