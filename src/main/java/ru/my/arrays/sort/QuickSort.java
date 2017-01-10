@@ -12,69 +12,6 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class QuickSort {
 
-    public static void sort(int[]array) {
-
-        int leftIndex = 0;
-        int rightIndex = array.length - 1;
-
-        recursiveSort(leftIndex, rightIndex, array);
-    }
-
-    private static void recursiveSort(int startLeftIndex, int endRightIndex, int[]array) {
-
-        //Выйти, если в отрезке один элемент
-        if (endRightIndex - startLeftIndex <= 1) {
-            return;
-        }
-
-        int leftIndex = startLeftIndex;
-        int rightIndex = endRightIndex;
-        int bearingIndex = (rightIndex - leftIndex) / 2;
-        int bearingElement = array[bearingIndex];
-        boolean leftSwap = false;
-        boolean rightSwap = false;
-
-
-        while (leftIndex != rightIndex) {
-
-            if ((array[leftIndex] <= bearingElement) && (leftIndex != bearingIndex)) {
-                leftIndex ++;
-            } else {
-                //Остановится и ожидать элемента для обмена
-                leftSwap = true;
-            }
-
-            if ((array[rightIndex] > bearingElement) && (rightIndex != bearingIndex)) {
-                rightIndex --;
-            } else {
-                //Остановится и ожидать элемента для обмена
-                rightSwap = true;
-            }
-
-            if (leftSwap && rightSwap) {
-                int tmp = array[leftIndex];
-                array[leftIndex] = array[rightIndex];
-                array[rightIndex] = tmp;
-
-                leftSwap = false;
-                rightSwap = false;
-
-                if (leftIndex != bearingIndex) {
-                    leftIndex++;
-                }
-
-                if (rightIndex != bearingIndex) {
-                    rightIndex--;
-                }
-
-            }
-        }
-
-        //Рекурсивно отсортировать каждый из подмассивов
-        recursiveSort(startLeftIndex, leftIndex, array);
-        recursiveSort(rightIndex, endRightIndex, array);
-    }
-
     public static void main(String[] args) {
         int[] array = ThreadLocalRandom.current().ints(100, 0, 100).distinct().toArray();
         Arrays.stream(array).forEach(i -> System.out.print(i + ", "));
@@ -82,7 +19,7 @@ public class QuickSort {
         int[] systemSortedArray = Arrays.stream(array).sorted().toArray();
         Arrays.stream(systemSortedArray).forEach(i -> System.out.print(i + ", "));
 
-        QuickSort.sort2(array);
+        QuickSort.sort(array);
         System.out.println();
 
         Arrays.stream(array).forEach(i -> System.out.print(i + ", "));
@@ -109,14 +46,14 @@ public class QuickSort {
 
     }
 
-    public static void sort2(int [] array) {
+    public static void sort(int [] array) {
         int leftIndex = 0;
         int rightIndex = array.length - 1;
 
-        recursive2(leftIndex, rightIndex, array);
+        recursive(leftIndex, rightIndex, array);
     }
 
-    public static void recursive2(int startLeftIndex, int endRightIndex, int[]array) {
+    public static void recursive(int startLeftIndex, int endRightIndex, int[]array) {
         //Выйти, если в отрезке один элемент
         if (endRightIndex - startLeftIndex < 1) {
             return;
@@ -126,24 +63,22 @@ public class QuickSort {
         int rightIndex = endRightIndex;
 
         int bearingIndex = leftIndex + (rightIndex - leftIndex)/2;
-        int bearingElement = array[bearingIndex];
         boolean leftSwap = false;
         boolean rightSwap = false;
 
         while (leftIndex != rightIndex) {
 
-            if (array[leftIndex] <= bearingElement && leftIndex != bearingIndex) {
+            if (array[leftIndex] <= array[bearingIndex] && leftIndex != bearingIndex) {
                 leftIndex++;
             } else {
                 leftSwap = true;
             }
 
-            if (array[rightIndex] > bearingElement && rightIndex != bearingIndex) {
+            if (array[rightIndex] > array[bearingIndex] && rightIndex != bearingIndex) {
                 rightIndex--;
             } else {
                 rightSwap = true;
             }
-
 
             if (leftSwap && rightSwap) {
                 int tmp = array[leftIndex];
@@ -170,8 +105,8 @@ public class QuickSort {
 
         }
 
-        recursive2(startLeftIndex, bearingIndex-1, array);
-        recursive2(bearingIndex+1, endRightIndex, array);
+        recursive(startLeftIndex, bearingIndex-1, array);
+        recursive(bearingIndex+1, endRightIndex, array);
 
     }
 
